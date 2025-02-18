@@ -1,10 +1,10 @@
 const CryptoJS = require('crypto-js');
-require('dotenv').config(); // Load .env here
-const secretKey = process.env.JWT_SECRET; // Use the JWT_SECRET
+require('dotenv').config(); 
+const secretKey = process.env.JWT_SECRET; 
 
 function encryptData(data) {
     if (typeof data !== 'string') {
-        data = JSON.stringify(data); // Ensure data is a string
+        data = JSON.stringify(data); 
     }
     return CryptoJS.AES.encrypt(data, secretKey).toString();
 }
@@ -14,9 +14,8 @@ function decryptData(ciphertext) {
     const decryptedData = bytes.toString(CryptoJS.enc.Utf8);
 
     try {
-      return JSON.parse(decryptedData); // Attempt to parse as JSON
+      return JSON.parse(decryptedData); 
     } catch (error) {
-      // If parsing as JSON fails, return as a plain string (e.g. for name search).
       return decryptedData;
     }
 }

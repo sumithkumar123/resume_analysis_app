@@ -77,10 +77,9 @@ async function processResumeWithGemini(rawText) {
 
         console.log("Original Gemini response text:", generatedText);
 
-         // --- Robust JSON Cleaning and Extraction ---
         let cleanedText = generatedText
-            .replace(/`json|`/gi, '')  // Remove markdown (case-insensitive)
-            .trim();                    // Remove leading/trailing whitespace
+            .replace(/`json|`/gi, '')  
+            .trim();                    
 
         // Remove all leading chars that are not { or [
         cleanedText = cleanedText.replace(/^[^\{\[]*/, '');

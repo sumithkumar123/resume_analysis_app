@@ -13,13 +13,12 @@ router.post('/enrich', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: 'Missing raw_text in request body' });
         }
 
-        console.log("raw_text received in /enrich:", raw_text); // Log the raw text
+        console.log("raw_text received in /enrich:", raw_text);
 
         let geminiData;
         try {
             geminiData = await processResumeWithGemini(raw_text);
         } catch (geminiError) {
-            // Gemini API error or parsing error
             return res.status(502).json({ error: 'Error processing resume with Gemini', details: geminiError.message }); 
         }
 
@@ -33,7 +32,6 @@ router.post('/enrich', authenticateToken, async (req, res) => {
         res.status(200).json({ message: 'Applicant data saved successfully' });
 
     } catch (error) {
-        // Handle database errors and other unexpected errors
         console.error("Error in /enrich:", error);
         if (error.name === 'ValidationError') {
             return res.status(400).json({ error: 'Validation Error', details: error.message });
@@ -59,7 +57,7 @@ router.get('/search', authenticateToken, async (req, res) => {
         const encryptedApplicants = applicants.map(applicant => {
             const { name, email, ...rest } = applicant.toObject(); 
             return {
-                ...rest, // Include other fields from the applicant
+                ...rest,
                 name: encryptData(name),
                 email: encryptData(email)
             };

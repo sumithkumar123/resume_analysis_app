@@ -6,7 +6,6 @@ const limiter = new RateLimiter({ tokensPerInterval: 60, interval: 'minute' });
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey;
 
-// Helper for rate limiting and retries
 async function makeRateLimitedRequest(requestFn, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -79,12 +78,10 @@ async function processResumeWithGemini(rawText) {
 
         let cleanedText = generatedText
             .replace(/`json|`/gi, '')  
-            .trim();                    
+            .trim();                   
 
-        // Remove all leading chars that are not { or [
         cleanedText = cleanedText.replace(/^[^\{\[]*/, '');
 
-        // Remove trailing non-JSON characters.
         cleanedText = cleanedText.replace(/[^\]}]+$/, '');
 
         console.log("Cleaned text (before manual fix):", cleanedText);
@@ -98,7 +95,6 @@ async function processResumeWithGemini(rawText) {
 
             let fixedText;
             try {
-                // Extract substring between FIRST { and LAST }
                 const firstBrace = cleanedText.indexOf('{');
                 const lastBrace = cleanedText.lastIndexOf('}');
                 if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
@@ -106,18 +102,17 @@ async function processResumeWithGemini(rawText) {
                   console.log("Extracted JSON substring:", fixedText);
                 }
                  else {
-                    fixedText = ""; // Set to empty string if extraction fails
+                    fixedText = ""; 
                     console.log("Could not extract valid JSON substring.");
-                    return {}; // Return empty object
+                    return {}; 
                 }
 
                 fixedText = fixedText
-                    .replace(/(\w+):/g, '"$1":')  // Quote unquoted keys
-                    .replace(/'/g, '"')          // Single quotes to double quotes
-                    .replace(/,(\s*[\]}])/g, '$1') // Remove trailing commas
-                    .replace(/^[^a-zA-Z0-9{\[]*/, "")// Remove leading non-JSON
-                    .replace(/[^a-zA-Z0-9}\]]*$/, ""); // Remove trailing non-JSON
-
+                    .replace(/(\w+):/g, '"$1":') 
+                    .replace(/'/g, '"')        
+                    .replace(/,(\s*[\]}])/g, '$1')
+                    .replace(/^[^a-zA-Z0-9{\[]*/, "")
+                    .replace(/[^a-zA-Z0-9}\]]*$/, ""); 
                 console.log("Fixed text (before final parse):", fixedText);
                 const parsedData = JSON.parse(fixedText);
                 return parsedData;
@@ -125,13 +120,12 @@ async function processResumeWithGemini(rawText) {
             } catch (finalError) {
                 console.error("Failed to parse even after manual fixes:", finalError);
                 console.error("Fixed Text:", fixedText);
-                // Return empty object.
                 return {};
             }
         }
     } catch (error) {
         console.error("Error calling or processing Gemini API:", error);
-        throw error; // Re-throw for consistent error handling in route
+        throw error;
     }
 }
 

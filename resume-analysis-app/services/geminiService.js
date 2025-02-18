@@ -6,7 +6,6 @@ const limiter = new RateLimiter({ tokensPerInterval: 60, interval: 'minute' });
 const geminiApiKey = process.env.GEMINI_API_KEY;
 const geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey;
 
-// Helper for rate limiting and retries
 async function makeRateLimitedRequest(requestFn, maxRetries = 3) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
@@ -77,15 +76,12 @@ async function processResumeWithGemini(rawText) {
 
         console.log("Original Gemini response text:", generatedText);
 
-         // --- Robust JSON Cleaning and Extraction ---
         let cleanedText = generatedText
             .replace(/`json|`/gi, '')  // Remove markdown (case-insensitive)
             .trim();                    // Remove leading/trailing whitespace
 
-        // Remove all leading chars that are not { or [
         cleanedText = cleanedText.replace(/^[^\{\[]*/, '');
 
-        // Remove trailing non-JSON characters.
         cleanedText = cleanedText.replace(/[^\]}]+$/, '');
 
         console.log("Cleaned text (before manual fix):", cleanedText);
@@ -99,7 +95,6 @@ async function processResumeWithGemini(rawText) {
 
             let fixedText;
             try {
-                // Extract substring between FIRST { and LAST }
                 const firstBrace = cleanedText.indexOf('{');
                 const lastBrace = cleanedText.lastIndexOf('}');
                 if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {

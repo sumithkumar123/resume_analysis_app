@@ -4,8 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "resume-analysis-app/node server.js",
+    "dev": "resume-analysis-app/nodemon server.js"
   },
   "keywords": [],
   "author": "",

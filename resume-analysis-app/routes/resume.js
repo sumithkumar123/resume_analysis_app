@@ -1,4 +1,3 @@
-// routes/resume.js
 const express = require('express');
 const router = express.Router();
 const Applicant = require('../models/Applicant');
@@ -6,7 +5,6 @@ const authenticateToken = require('../utils/authMiddleware');
 const { encryptData, decryptData } = require('../utils/encryption');
 const { processResumeWithGemini } = require('../services/geminiService');
 
-// #2. Resume Data Enrichment API
 router.post('/enrich', authenticateToken, async (req, res) => {
     try {
         const { url, raw_text } = req.body;
@@ -22,14 +20,13 @@ router.post('/enrich', authenticateToken, async (req, res) => {
             geminiData = await processResumeWithGemini(raw_text);
         } catch (geminiError) {
             // Gemini API error or parsing error
-            return res.status(502).json({ error: 'Error processing resume with Gemini', details: geminiError.message }); // 502 Bad Gateway
+            return res.status(502).json({ error: 'Error processing resume with Gemini', details: geminiError.message }); 
         }
 
         if (!geminiData || Object.keys(geminiData).length === 0) {
             return res.status(404).json({ error: 'No data extracted from raw text' });
         }
 
-        // The database schema now enforces name and email.  No need for extra validation *here*.
 
         const newApplicant = new Applicant(geminiData);
         await newApplicant.save();
@@ -39,14 +36,12 @@ router.post('/enrich', authenticateToken, async (req, res) => {
         // Handle database errors and other unexpected errors
         console.error("Error in /enrich:", error);
         if (error.name === 'ValidationError') {
-            // Mongoose validation error (e.g., missing required fields)
             return res.status(400).json({ error: 'Validation Error', details: error.message });
         }
         res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-// #3. Resume Search API
 router.get('/search', authenticateToken, async (req, res) => {
     try {
         const encryptedName = req.body.name;
@@ -55,16 +50,14 @@ router.get('/search', authenticateToken, async (req, res) => {
         }
         const name = decryptData(encryptedName);
 
-        // Use a regular expression for case-insensitive and token-agnostic search
         const applicants = await Applicant.find({ name: { $regex: new RegExp(name, 'i') } }).exec();
 
         if (!applicants || applicants.length === 0) {
             return res.status(404).json({ error: 'No matching records found' });
         }
 
-        // Encrypt the name and email in the response
         const encryptedApplicants = applicants.map(applicant => {
-            const { name, email, ...rest } = applicant.toObject(); // Destructure and get rest of fields
+            const { name, email, ...rest } = applicant.toObject(); 
             return {
                 ...rest, // Include other fields from the applicant
                 name: encryptData(name),

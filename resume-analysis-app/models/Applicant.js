@@ -13,8 +13,8 @@ const experienceSchema = new mongoose.Schema({
 }, { _id: false });
 
 const applicantSchema = new mongoose.Schema({
-    name: { type: String, required: true },  //  make name and email required
-    email: { type: String, required: true }, //  make name and email required
+    name: { type: String, required: true },  
+    email: { type: String, required: true },
     education: { type: educationSchema, default: () => ({}) },
     experience: { type: experienceSchema, default: () => ({}) },
     skills: { type: [String], default: [] },

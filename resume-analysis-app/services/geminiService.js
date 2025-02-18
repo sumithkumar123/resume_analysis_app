@@ -77,8 +77,8 @@ async function processResumeWithGemini(rawText) {
         console.log("Original Gemini response text:", generatedText);
 
         let cleanedText = generatedText
-            .replace(/`json|`/gi, '')  // Remove markdown (case-insensitive)
-            .trim();                    // Remove leading/trailing whitespace
+            .replace(/`json|`/gi, '')  
+            .trim();                   
 
         cleanedText = cleanedText.replace(/^[^\{\[]*/, '');
 
@@ -102,18 +102,17 @@ async function processResumeWithGemini(rawText) {
                   console.log("Extracted JSON substring:", fixedText);
                 }
                  else {
-                    fixedText = ""; // Set to empty string if extraction fails
+                    fixedText = ""; 
                     console.log("Could not extract valid JSON substring.");
-                    return {}; // Return empty object
+                    return {}; 
                 }
 
                 fixedText = fixedText
-                    .replace(/(\w+):/g, '"$1":')  // Quote unquoted keys
-                    .replace(/'/g, '"')          // Single quotes to double quotes
-                    .replace(/,(\s*[\]}])/g, '$1') // Remove trailing commas
-                    .replace(/^[^a-zA-Z0-9{\[]*/, "")// Remove leading non-JSON
-                    .replace(/[^a-zA-Z0-9}\]]*$/, ""); // Remove trailing non-JSON
-
+                    .replace(/(\w+):/g, '"$1":') 
+                    .replace(/'/g, '"')        
+                    .replace(/,(\s*[\]}])/g, '$1')
+                    .replace(/^[^a-zA-Z0-9{\[]*/, "")
+                    .replace(/[^a-zA-Z0-9}\]]*$/, ""); 
                 console.log("Fixed text (before final parse):", fixedText);
                 const parsedData = JSON.parse(fixedText);
                 return parsedData;
@@ -121,13 +120,12 @@ async function processResumeWithGemini(rawText) {
             } catch (finalError) {
                 console.error("Failed to parse even after manual fixes:", finalError);
                 console.error("Fixed Text:", fixedText);
-                // Return empty object.
                 return {};
             }
         }
     } catch (error) {
         console.error("Error calling or processing Gemini API:", error);
-        throw error; // Re-throw for consistent error handling in route
+        throw error;
     }
 }
 

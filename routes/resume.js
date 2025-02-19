@@ -1,8 +1,12 @@
+
+
+
 const express = require('express');
 const router = express.Router();
 const Applicant = require('../models/Applicant');
 const authenticateToken = require('../utils/authMiddleware');
 const { encryptData, decryptData } = require('../utils/encryption');
+
 const { processResumeWithGemini } = require('../services/geminiService');
 
 router.post('/enrich', authenticateToken, async (req, res) => {
@@ -19,7 +23,7 @@ router.post('/enrich', authenticateToken, async (req, res) => {
         try {
             geminiData = await processResumeWithGemini(raw_text);
         } catch (geminiError) {
-            return res.status(502).json({ error: 'Error processing resume with Gemini', details: geminiError.message }); 
+            return res.status(502).json({ error: 'Error processing resume with Gemini', details: geminiError.message });
         }
 
         if (!geminiData || Object.keys(geminiData).length === 0) {
@@ -42,11 +46,11 @@ router.post('/enrich', authenticateToken, async (req, res) => {
 
 router.get('/search', authenticateToken, async (req, res) => {
     try {
-        const encryptedName = req.body.name;
-        if (!encryptedName) {
-            return res.status(400).json({ error: 'Missing name in request body' });
+        const name = req.query.name;
+
+        if (!name) {
+            return res.status(400).json({ error: 'Missing name in query parameter' });
         }
-        const name = decryptData(encryptedName);
 
         const applicants = await Applicant.find({ name: { $regex: new RegExp(name, 'i') } }).exec();
 
@@ -54,15 +58,8 @@ router.get('/search', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'No matching records found' });
         }
 
-        const encryptedApplicants = applicants.map(applicant => {
-            const { name, email, ...rest } = applicant.toObject(); 
-            return {
-                ...rest,
-                name: encryptData(name),
-                email: encryptData(email)
-            };
-        });
-        res.status(200).json(encryptedApplicants);
+        res.status(200).json(applicants);
+
 
     } catch (error) {
         console.error("Error in /search:", error);

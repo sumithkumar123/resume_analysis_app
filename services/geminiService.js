@@ -25,6 +25,8 @@ async function makeRateLimitedRequest(requestFn, maxRetries = 3) {
 
 async function processResumeWithGemini(rawText) {
     try {
+        const escapedRawText = rawText.replace(/\n/g, '\\n');
+
         const prompt = `Extract the following information from the provided resume text and return it as a pure JSON object:
         {
             "name": "",
@@ -44,7 +46,7 @@ async function processResumeWithGemini(rawText) {
         }
 
         Resume Text:
-        ${rawText}
+        ${escapedRawText}
 
         Return ONLY a valid JSON object, and nothing else.  Do not include any surrounding text. Do not include any markdown. Do not include any explanations.  Do not include any introductory phrases. If any information is not found, leave the corresponding field blank or null, as appropriate.  The summary should be a short description of the candidate's profile, generated based on the resume data.`;
 
@@ -77,15 +79,22 @@ async function processResumeWithGemini(rawText) {
         console.log("Original Gemini response text:", generatedText);
 
         let cleanedText = generatedText
-            .replace(/`json|`/gi, '')  
-            .trim();                   
+            .replace(/`json|`/gi, '')
+            .trim();
 
         cleanedText = cleanedText.replace(/^[^\{\[]*/, '');
-
         cleanedText = cleanedText.replace(/[^\]}]+$/, '');
 
-        console.log("Cleaned text (before manual fix):", cleanedText);
+        cleanedText = cleanedText
+          .replace(/(\n\s*"[^"]+": [^,\n]+)(\n\s*"[^"]+":)/g, '$1,$2')
+          .replace(/(\])(\n\s*"[^"]+":)/g, '$1,$2')
+          .replace(/(\})(\n\s*"[^"]+":)/g, '$1,$2')
+          .replace(/(\})\s*(\{)/g, '$1,$2')
+          .replace(/([^,\]\}])\s*(\n\s*["\]\}])/g, '$1,$2')
+          .replace(/("[^"]+": [^,\n]+)\s*("[^"]+":)/g, '$1,$2')
+          .replace(/([^,\]\}])\s*("[^"]+":)/g, '$1,$2');
 
+        console.log("Cleaned text (before manual fix):", cleanedText);
 
         try {
             const parsedData = JSON.parse(cleanedText);
@@ -102,20 +111,27 @@ async function processResumeWithGemini(rawText) {
                   console.log("Extracted JSON substring:", fixedText);
                 }
                  else {
-                    fixedText = ""; 
-                    console.log("Could not extract valid JSON substring.");
-                    return {}; 
+                    fixedText = "{}";
+                    console.log("Could not extract valid JSON substring. Returning empty object.");
+                    return {};
                 }
 
                 fixedText = fixedText
-                    .replace(/(\w+):/g, '"$1":') 
-                    .replace(/'/g, '"')        
+                    .replace(/(\w+):/g, '"$1":')
+                    .replace(/'/g, '"')
                     .replace(/,(\s*[\]}])/g, '$1')
                     .replace(/^[^a-zA-Z0-9{\[]*/, "")
-                    .replace(/[^a-zA-Z0-9}\]]*$/, ""); 
+                    .replace(/[^a-zA-Z0-9}\]]*$/, "");
+
                 console.log("Fixed text (before final parse):", fixedText);
-                const parsedData = JSON.parse(fixedText);
-                return parsedData;
+
+                try {
+                    const parsedData = JSON.parse(fixedText);
+                    return parsedData;
+                } catch(e) {
+                    console.error("Still failed to parse after fix. Returning empty object");
+                    return {};
+                }
 
             } catch (finalError) {
                 console.error("Failed to parse even after manual fixes:", finalError);
@@ -125,7 +141,8 @@ async function processResumeWithGemini(rawText) {
         }
     } catch (error) {
         console.error("Error calling or processing Gemini API:", error);
-        throw error;
+        console.log("Returning empty object due to error.");
+        return {};
     }
 }
 

@@ -7,13 +7,15 @@ const resumeRoutes = require('./routes/resume');
 
 const app = express();
 
-app.use(express.json()); 
+app.use(express.json());
+
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('Connected to MongoDB Atlas'))
   .catch(err => {
       console.error('Could not connect to MongoDB:', err);
-      process.exit(1); 
+      process.exit(1);
+
   });
 
 app.use('/api/auth', authRoutes);
@@ -24,10 +26,12 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
-    console.error(err.stack); 
+    console.error(err.stack);
+
     res.status(500).send('Something broke!');
 });
-const port = process.env.PORT || 3000; // Use environment variable, fallback to 3000
+const port = process.env.PORT || 3000;
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
